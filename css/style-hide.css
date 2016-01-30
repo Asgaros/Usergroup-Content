@@ -1,0 +1,5 @@
+.term-name-wrap p,
+.term-slug-wrap,
+.term-description-wrap {
+    display: none;
+}

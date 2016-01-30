@@ -1,0 +1,18 @@
+.usergroup-tag,
+.usergroup-label {
+    padding: 0 5px;
+    border-radius: 3px;
+    color: #000;
+    margin: 2px;
+    display: inline-block;
+}
+.usergroup-color {
+    width: 25px;
+    height: 25px;
+}
+.userlist-color {
+    width: 19px;
+    height: 19px;
+    float: left;
+    margin-right: 8px;
+}

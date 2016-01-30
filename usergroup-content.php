@@ -32,4 +32,9 @@ function usergroup_content_textdomain() {
 }
 add_action('plugins_loaded', 'usergroup_content_textdomain');
 
+require('includes/usergroups.php');
+
+$directory = plugin_dir_url(__FILE__);
+$uc_usergroups = new uc_usergroups($directory);
+
 ?>
