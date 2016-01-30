@@ -24,4 +24,12 @@
   You should have received a copy of the GNU General Public License
   along with Usergroup Content. If not, see https://www.gnu.org/licenses/gpl-2.0.html.
 */
+
+if (!defined('ABSPATH')) exit;
+
+function usergroup_content_textdomain() {
+    load_plugin_textdomain('usergroup-content', FALSE, basename(dirname(__FILE__)).'/languages/');
+}
+add_action('plugins_loaded', 'usergroup_content_textdomain');
+
 ?>
