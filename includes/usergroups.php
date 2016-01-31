@@ -344,39 +344,34 @@ class uc_usergroups {
     		$select .= '</select>';
         }
 
-
-
-
 		if ($current) {
 			$color = $this->get_meta('user-group-color', $current->term_id);
-			$colorblock = ( $color === '#' || empty($color) ) ? '' : '<div class="userlist-color" style="background-color: '.$color.';"></div>';
 
-			?>
-			<div id="user-group-header">
-				<h2><?php echo $colorblock; echo $current->name; ?> </h2>
-			</div>
-			<div class="clear"></div>
-		<?php
+			echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$current->name.'</h2>';
 		}
 
 		ob_start();
 
-		$args = array();
-		if(isset($_GET['s'])) { $args['s'] = $_GET['s']; }
-		if(isset($_GET['role'])) { $args['role'] = $_GET['role']; }
 
 
-        if ($select) {
-		?>
-		<label for="usergroups-select"><?php _e('User Groups:', 'usergroup-content'); ?></label>
 
-		<form method="get" action="<?php echo esc_url( preg_replace('/(.*?)\/users/ism', 'users', add_query_arg($args, remove_query_arg('user-group'))) ); ?>" style="display:inline;">
-			<?php echo $select; ?>
-		</form>
-		<style type="text/css">
-			.subsubsub li.user-group { display: inline-block!important; }
-		</style>
-		<script type="text/javascript">
+        if ($terms) {
+            $args = array();
+
+            if (isset($_GET['s'])) {
+                $args['s'] = $_GET['s'];
+            }
+
+            if (isset($_GET['role'])) {
+                $args['role'] = $_GET['role'];
+            }
+
+            echo '<label for="usergroups-select">'.__('Usergroups:', 'usergroup-content').'</label>';
+            echo '<form method="get" action="'.esc_url(preg_replace('/(.*?)\/users/ism', 'users', add_query_arg($args, remove_query_arg('user-group')))).'" style="display: inline;">';
+			echo $select;
+		    echo '</form>';
+            ?>
+		    <script type="text/javascript">
 			jQuery(document).ready(function($) {
 				<?php if(isset($_GET['user-group'])) { ?>
 				$('ul.subsubsub li a').each(function() {
@@ -387,16 +382,6 @@ class uc_usergroups {
 					});
 				});
 				<?php } ?>
-				$("#usergroups-select").change(function() {
-					var action = $(this).parents("form").attr('action');
-					if(action.match(/\?/i)) {
-						action = action + '&user-group=' + $(this).val();
-					} else {
-						action = action + '?user-group=' + $(this).val();
-					}
-
-					window.location = action;
-				});
 			});
 		</script>
 
@@ -426,7 +411,6 @@ class uc_usergroups {
 
 			$Query->query_where .= " AND $wpdb->users.ID IN ($ids)";
 		}
-
 	}
 }
 
