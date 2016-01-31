@@ -326,36 +326,18 @@ class uc_usergroups {
 	}*/
 
 	function views($views) {
-        $select = false;
-        $current = false;
-        $current_slug = '';
-		$terms = get_terms('user-group', array('hide_empty' => false));
+        $terms = get_terms('user-group', array('hide_empty' => false));
 
         if ($terms) {
-            $select = '<select name="user-group" id="usergroups-select"><option value="0">'.__('All Users', 'usergroup-content').'</option>';
-    		foreach($terms as $term) {
-    			if(isset($_GET['user-group']) && $_GET['user-group'] === $term->slug) {
-    				$current = $term;
-                    $current_slug = $current->slug;
-    			}
-    			$select .= '<option value="'.$term->slug.'"'.selected($term->slug, $current_slug, false).'>'.$term->name.'</option>';
-    		}
+            // Show name of current usergroup.
+            $usergroup = (!empty($_GET['user-group'])) ? get_term_by('slug', $_GET['user-group'], 'user-group') : false;
 
-    		$select .= '</select>';
-        }
+            if ($usergroup) {
+                $color = $this->get_meta('user-group-color', $usergroup->term_id);
+                echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$usergroup->name.'</h2>';
+            }
 
-		if ($current) {
-			$color = $this->get_meta('user-group-color', $current->term_id);
-
-			echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$current->name.'</h2>';
-		}
-
-		ob_start();
-
-
-
-
-        if ($terms) {
+            // Build usergroup select dropdown
             $args = array();
 
             if (isset($_GET['s'])) {
@@ -366,50 +348,45 @@ class uc_usergroups {
                 $args['role'] = $_GET['role'];
             }
 
-            echo '<label for="usergroups-select">'.__('Usergroups:', 'usergroup-content').'</label>';
-            echo '<form method="get" action="'.esc_url(preg_replace('/(.*?)\/users/ism', 'users', add_query_arg($args, remove_query_arg('user-group')))).'" style="display: inline;">';
-			echo $select;
-		    echo '</form>';
-            ?>
-		    <script type="text/javascript">
-			jQuery(document).ready(function($) {
-				<?php if(isset($_GET['user-group'])) { ?>
-				$('ul.subsubsub li a').each(function() {
-					var $that = $(this);
-					$(this).attr('href', function() {
-						var sep = $that.attr('href').match(/\?/i) ? '&' : '?';
-						return $(this).attr('href') + sep +'user-group=<?php echo esc_attr($_GET['user-group']); ?>';
-					});
-				});
-				<?php } ?>
-			});
-		</script>
+            $form = '<label for="usergroups-select">'.__('Usergroups:', 'usergroup-content').' </label>';
+            $form .= '<form method="get" action="'.esc_url(preg_replace('/(.*?)\/users/ism', 'users', add_query_arg($args, remove_query_arg('user-group')))).'" style="display: inline;">';
+            $form .= '<select name="user-group" id="usergroups-select"><option value="0">'.__('All Users', 'usergroup-content').'</option>';
 
-		<?php
+            foreach($terms as $term) {
+    			$form .= '<option value="'.$term->slug.'"'.selected($term->slug, ($usergroup) ? $usergroup->slug : '', false).'>'.$term->name.'</option>';
+    		}
+
+            $form .= '</select>';
+		    $form .= '</form>';
+            $views['user-group'] = $form;
         }
-		$form = ob_get_clean();
 
-		$views['user-group'] = $form;
 		return $views;
 	}
 
 	function user_query($Query = '') {
-		global $pagenow,$wpdb;
+		global $pagenow, $wpdb;
 
-		if($pagenow !== 'users.php') { return; }
+		if ($pagenow !== 'users.php') {
+            return;
+        }
 
-		if(!empty($_GET['user-group'])) {
-
-			$groups = explode(',',$_GET['user-group']);
+		if (!empty($_GET['user-group'])) {
+			$group = $_GET['user-group'];
 			$ids = array();
-			foreach($groups as $group) {
-				$term = get_term_by('slug', esc_attr($group), 'user-group');
-				$user_ids = get_objects_in_term($term->term_id, 'user-group');
-				$ids = array_merge($user_ids, $ids);
-			}
-			$ids = implode(',', wp_parse_id_list( $user_ids ) );
+			$term = get_term_by('slug', esc_attr($group), 'user-group');
 
-			$Query->query_where .= " AND $wpdb->users.ID IN ($ids)";
+            if (!empty($term)) {
+    			$user_ids = get_objects_in_term($term->term_id, 'user-group');
+
+                if (!empty($user_ids)) {
+        		    $ids = array_merge($user_ids, $ids);
+        			$ids = implode(',', wp_parse_id_list( $user_ids ) );
+        			$Query->query_where .= " AND $wpdb->users.ID IN ($ids)";
+                } else {
+                    $Query->query_where .= " AND $wpdb->users.ID IN (-1)";
+                }
+            }
 		}
 	}
 }
