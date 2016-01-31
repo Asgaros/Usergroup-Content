@@ -19,10 +19,8 @@ $searchstring = '%' . $img . '%';
 $query = $wpdb->prepare( $querystring, $searchstring );
 $result = $wpdb->get_row( $query, ARRAY_A );
 
-//var_dump( maybe_unserialize( $result['meta_value'] )['file'] != $img );
-
 // If empty result, maybe we have a thumbnail image
-if( $result === false ) {
+if( $result === null ) {
    $searchstring = '%' . end( $parts ) . '%';
    $query = $wpdb->prepare( $querystring, $searchstring );
    $results = $wpdb->get_results( $query, ARRAY_A );
@@ -42,8 +40,8 @@ if( $result === false ) {
    }
 }
 
-if( $result === false ) {
-   die( __( "No such image". "usergroup-content" ) );
+if( empty( $result ) ) {
+   die( __( "No such image", "usergroup-content" ) );
 }
 
 $attachment = maybe_unserialize( $result['meta_value'] );
