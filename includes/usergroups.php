@@ -326,11 +326,39 @@ class uc_usergroups {
 	}*/
 
 	function views($views) {
-        $usergroup = (!empty($_GET['user-group'])) ? get_term_by('slug', $_GET['user-group'], 'user-group') : false;
+        $terms = get_terms('user-group', array('hide_empty' => false));
 
-        if ($usergroup) {
-            $color = $this->get_meta('user-group-color', $usergroup->term_id);
-            echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$usergroup->name.'</h2>';
+        if ($terms) {
+            // Show name of current usergroup.
+            $usergroup = (!empty($_GET['user-group'])) ? get_term_by('slug', $_GET['user-group'], 'user-group') : false;
+
+            if ($usergroup) {
+                $color = $this->get_meta('user-group-color', $usergroup->term_id);
+                echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$usergroup->name.'</h2>';
+            }
+
+            // Build usergroup select dropdown
+            $args = array();
+
+            if (isset($_GET['s'])) {
+                $args['s'] = $_GET['s'];
+            }
+
+            if (isset($_GET['role'])) {
+                $args['role'] = $_GET['role'];
+            }
+
+            $form = '<label for="usergroups-select">'.__('Usergroups:', 'usergroup-content').' </label>';
+            $form .= '<form method="get" action="'.esc_url(preg_replace('/(.*?)\/users/ism', 'users', add_query_arg($args, remove_query_arg('user-group')))).'" style="display: inline;">';
+            $form .= '<select name="user-group" id="usergroups-select"><option value="0">'.__('All Users', 'usergroup-content').'</option>';
+
+            foreach($terms as $term) {
+    			$form .= '<option value="'.$term->slug.'"'.selected($term->slug, ($usergroup) ? $usergroup->slug : '', false).'>'.$term->name.'</option>';
+    		}
+
+            $form .= '</select>';
+		    $form .= '</form>';
+            $views['user-group'] = $form;
         }
 
 		return $views;
