@@ -97,7 +97,7 @@ class uc_usergroups {
 
         		foreach($terms as $term) {
         			$href = add_query_arg(array('user-group' => $term->slug), admin_url('users.php'));
-        			$color = $this->get_meta('user-group-color', $term->term_id);
+                    $color = get_term_meta($term->term_id, 'user-group-color', true);
         			$tags .= '<a class="usergroup-tag" style="border: 3px solid '.$color.';" href="'.$href.'" title="'.$term->description.'">'.$term->name.'</a>';
         		}
 
@@ -143,7 +143,7 @@ class uc_usergroups {
 
         if (!empty($terms)) {
             foreach ($terms as $term) {
-                $color = $this->get_meta('user-group-color', $term->term_id);
+                $color = get_term_meta($term->term_id, 'user-group-color', true);
 
 				echo '<input type="checkbox" name="user-group[]" id="user-group-'.$term->slug.'" value="'.$term->slug.'" '.checked(true, is_object_in_term($user->ID, 'user-group', $term->slug), false).' />';
                 echo '<label class="usergroup-label" for="user-group-'.$term->slug.'" style="border: 3px solid '.$color.';">';
@@ -199,7 +199,7 @@ class uc_usergroups {
 			$term = get_term($term_id, 'user-group');
 			$out = '<a href="'.admin_url('users.php?user-group='.$term->slug).'">'.sprintf(_n(__('%s User'), __('%s Users'), $count), $count).'</a>';
 		} else if ($column === 'color') {
-			$color = $this->get_meta('user-group-color', $term_id);
+            $color = get_term_meta($term_id, 'user-group-color', true);
 			$out = '<div class="usergroup-color" style="background-color: '.$color.';"></div>';
 		}
 
@@ -208,7 +208,7 @@ class uc_usergroups {
 
     function add_color_form_field() {
         echo '<div class="form-field">';
-            echo '<input type="text" value="#333333" class="custom-color" name="user-group[user-group-color]" data-default-color="#333333" />';
+            echo '<input type="text" value="#333333" class="custom-color" name="user-group-color" data-default-color="#333333" />';
         echo '</div>';
     }
 
@@ -216,32 +216,15 @@ class uc_usergroups {
         echo '<tr class="form-field">';
             echo '<th scope="row">'.__('Color', 'usergroup-content').'</th>';
             echo '<td>';
-                $color = $this->get_meta('user-group-color');
-                echo '<input type="text" value="'.$color.'" class="custom-color" name="user-group[user-group-color]" data-default-color="#333333" />';
+                $color = get_term_meta($term->term_id, 'user-group-color', true);
+                echo '<input type="text" value="'.$color.'" class="custom-color" name="user-group-color" data-default-color="#333333" />';
             echo '</td>';
         echo '</tr>';
     }
 
     function save_usergroup($term_id) {
-        if (isset($_POST['user-group'])) {
-			$term_meta = (array)get_option('user-group-meta');
-			$term_meta[$term_id] =  (array)$_POST['user-group'];
-			update_option('user-group-meta', $term_meta);
-		}
-	}
-
-    function get_meta($key = '', $term_id = 0) {
-		if(isset($_GET['tag_ID'])) { $term_id = absint( $_GET['tag_ID'] ); }
-		if(empty($term_id)) { return false; }
-
-		$term_meta = (array) get_option('user-group-meta');
-
-		if(!isset($term_meta[$term_id])) { return false; }
-
-		if(!empty($key)) {
-			return isset($term_meta[$term_id][$key]) ? $term_meta[$term_id][$key] : false;
-		} else {
-			return $term_meta[$term_id];
+        if (isset($_POST['user-group-color'])) {
+            update_term_meta($term_id, 'user-group-color', $_POST['user-group-color']);
 		}
 	}
 
@@ -333,7 +316,7 @@ class uc_usergroups {
             $usergroup = (!empty($_GET['user-group'])) ? get_term_by('slug', $_GET['user-group'], 'user-group') : false;
 
             if ($usergroup) {
-                $color = $this->get_meta('user-group-color', $usergroup->term_id);
+                $color = get_term_meta($usergroup->term_id, 'user-group-color', true);
                 echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$usergroup->name.'</h2>';
             }
 
