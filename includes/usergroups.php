@@ -38,6 +38,31 @@ class uc_usergroups {
 		//add_filter('views_users', array(&$this, 'bulk_edit'));
 	}
 
+    // Returns all usergroups
+    function get_usergroups() {
+        return get_terms('user-group', array('hide_empty' => false));
+    }
+
+    // Returns usergroup by id/slug/name/term_taxonomy_id
+    function get_usergroup_by($value, $by = 'id') {
+        return get_term_by($by, $value, 'user-group');
+    }
+
+    // Returns color of usergroup
+    function get_usergroup_color($term_id) {
+        return get_term_meta($term_id, 'user-group-color', true);
+    }
+
+    // Returns usergroups of User
+    function get_usergroups_for_user($user_id, $fields = 'all') {
+        return wp_get_object_terms($user_id, 'user-group', array('fields' => $fields));
+    }
+
+    // Returns users in usergroup
+    function get_users_in_usergroup($usergroup_id) {
+        return get_objects_in_term($usergroup_id, 'user-group');
+    }
+
     function add_admin_menu() {
         add_users_page(__('Usergroups', 'usergroup-content'), __('Usergroups', 'usergroup-content'), 'administrator', 'edit-tags.php?taxonomy=user-group');
 	}
