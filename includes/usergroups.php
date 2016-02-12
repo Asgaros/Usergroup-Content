@@ -115,14 +115,14 @@ class uc_usergroups {
 
     function manage_users_custom_column($out, $column, $user_id) {
 		if ($column === 'user-group') {
-            $terms = $this->get_user_usergroups($user_id);
+            $terms = $this->get_usergroups_for_user($user_id);
 
     		if (!empty($terms)) {
         		$tags = '';
 
         		foreach($terms as $term) {
         			$href = add_query_arg(array('user-group' => $term->slug), admin_url('users.php'));
-                    $color = get_term_meta($term->term_id, 'user-group-color', true);
+                    $color = $this->get_usergroup_color($term->term_id);
         			$tags .= '<a class="usergroup-tag" style="border: 3px solid '.$color.';" href="'.$href.'" title="'.$term->description.'">'.$term->name.'</a>';
         		}
 
@@ -135,28 +135,18 @@ class uc_usergroups {
         }
 	}
 
-    function get_user_usergroups($user_id) {
-        if (!empty($user_id)) {
-            return wp_get_object_terms($user_id, 'user-group');
-        } else {
-            return false;
-		}
-	}
-
     function delete_term_relationships($user_id) {
 		wp_delete_object_term_relationships($user_id, 'user-group');
 	}
 
     /* USER PROFILE STUFF */
     function edit_user_usergroups($user) {
-        $tax = get_taxonomy('user-group');
-
-		// Make sure the user can assign terms of the taxonomy before proceeding.
-		if (!current_user_can($tax->cap->assign_terms)) {
+        // Make sure the user can assign terms of the taxonomy before proceeding.
+		if (!current_user_can('edit_users')) {
 			return;
         }
 
-		$terms = get_terms('user-group', array('hide_empty' => false));
+		$terms = $this->get_usergroups();
 
 		echo '<h2>'.__('Usergroups', 'usergroup-content').'</h2>';
         echo '<table class="form-table">';
@@ -168,7 +158,7 @@ class uc_usergroups {
 
         if (!empty($terms)) {
             foreach ($terms as $term) {
-                $color = get_term_meta($term->term_id, 'user-group-color', true);
+                $color = $this->get_usergroup_color($term->term_id);
 
 				echo '<input type="checkbox" name="user-group[]" id="user-group-'.$term->slug.'" value="'.$term->slug.'" '.checked(true, is_object_in_term($user->ID, 'user-group', $term->slug), false).' />';
                 echo '<label class="usergroup-label" for="user-group-'.$term->slug.'" style="border: 3px solid '.$color.';">';
@@ -186,10 +176,8 @@ class uc_usergroups {
 	}
 
     function save_user_usergroups($user_id, $user_groups = array(), $bulk = false) {
-        $tax = get_taxonomy('user-group');
-
-		// Make sure the current user can edit the user and assign terms before proceeding.
-		if (!current_user_can($tax->cap->assign_terms)) {
+        // Make sure the current user can edit the user and assign terms before proceeding.
+		if (!current_user_can('edit_users')) {
 			return;
 		}
 
@@ -198,7 +186,7 @@ class uc_usergroups {
 		}
 
 		if (is_null($user_groups) || empty($user_groups)) {
-            wp_delete_object_term_relationships($user_id, 'user-group');
+            $this->delete_term_relationships($user_id);
 		} else {
 			wp_set_object_terms($user_id, $user_groups, 'user-group', false);
 		}
@@ -221,10 +209,10 @@ class uc_usergroups {
 
         if ($column === 'users') {
             $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $wpdb->term_relationships WHERE term_taxonomy_id = %d", $term_id));
-			$term = get_term($term_id, 'user-group');
+			$term = $this->get_usergroup_by($term_id);
 			$out = '<a href="'.admin_url('users.php?user-group='.$term->slug).'">'.sprintf(_n(__('%s User'), __('%s Users'), $count), $count).'</a>';
 		} else if ($column === 'color') {
-            $color = get_term_meta($term_id, 'user-group-color', true);
+            $color = $this->get_usergroup_color($term_id);
 			$out = '<div class="usergroup-color" style="background-color: '.$color.';"></div>';
 		}
 
@@ -241,7 +229,7 @@ class uc_usergroups {
         echo '<tr class="form-field">';
             echo '<th scope="row">'.__('Color', 'usergroup-content').'</th>';
             echo '<td>';
-                $color = get_term_meta($term->term_id, 'user-group-color', true);
+                $color = $this->get_usergroup_color($term->term_id);
                 echo '<input type="text" value="'.$color.'" class="custom-color" name="user-group-color" data-default-color="#333333" />';
             echo '</td>';
         echo '</tr>';
@@ -269,7 +257,7 @@ class uc_usergroups {
 
         foreach($users['users'] as $user) {
 			$update_groups = array();
-			$groups = $this->get_user_usergroups($user);
+			$groups = $this->get_usergroups_for_user($user);
 			foreach($groups as $group) {
 				$update_groups[$group->slug] = $group->slug;
 			}
@@ -334,14 +322,14 @@ class uc_usergroups {
 	}*/
 
 	function views($views) {
-        $terms = get_terms('user-group', array('hide_empty' => false));
+        $terms = $this->get_usergroups();
 
         if ($terms) {
             // Show name of current usergroup.
-            $usergroup = (!empty($_GET['user-group'])) ? get_term_by('slug', $_GET['user-group'], 'user-group') : false;
+            $usergroup = (!empty($_GET['user-group'])) ? $this->get_usergroup_by($_GET['user-group'], 'slug') : false;
 
             if ($usergroup) {
-                $color = get_term_meta($usergroup->term_id, 'user-group-color', true);
+                $color = $this->get_usergroup_color($usergroup->term_id);
                 echo '<h2><div class="userlist-color" style="background-color: '.$color.';"></div>'.$usergroup->name.'</h2>';
             }
 
@@ -382,10 +370,10 @@ class uc_usergroups {
 		if (!empty($_GET['user-group'])) {
 			$group = $_GET['user-group'];
 			$ids = array();
-			$term = get_term_by('slug', esc_attr($group), 'user-group');
+			$term = $this->get_usergroup_by(esc_attr($group), 'slug');
 
             if (!empty($term)) {
-    			$user_ids = get_objects_in_term($term->term_id, 'user-group');
+    			$user_ids = $this->get_users_in_usergroup($term->term_id);
 
                 if (!empty($user_ids)) {
         		    $ids = array_merge($user_ids, $ids);
