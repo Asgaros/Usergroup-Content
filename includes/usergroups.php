@@ -53,9 +53,14 @@ class uc_usergroups {
         return get_term_meta($term_id, 'user-group-color', true);
     }
 
-    // Returns usergroups of User
+    // Returns usergroups of user
     function get_usergroups_for_user($user_id, $fields = 'all') {
         return wp_get_object_terms($user_id, 'user-group', array('fields' => $fields));
+    }
+
+    // Returns usergroups of post
+    function get_usergroups_for_post($post_id) {
+        return get_post_meta($post_id, 'usergroups', true);
     }
 
     // Returns users in usergroup

@@ -12,7 +12,7 @@ class uc_medialibrary {
     function add_usergroups_settings($form_fields, $post) {
         global $uc_usergroups;
         $usergroups = $uc_usergroups->get_usergroups();
-        $saved_usergroups = get_post_meta($post->ID, 'usergroups', true);
+        $saved_usergroups = $uc_usergroups->get_usergroups_for_post($post->ID);
         $usergroups_html = '';
 
         foreach ($usergroups as $usergroup) {
