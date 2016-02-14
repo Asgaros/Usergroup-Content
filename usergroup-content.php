@@ -33,12 +33,14 @@ function uc_textdomain() {
 add_action('plugins_loaded', 'uc_textdomain');
 
 require('includes/usergroups.php');
+require('includes/medialibrary.php');
 
 $directory = plugin_dir_url(__FILE__);
 $uc_usergroups = new uc_usergroups($directory);
+$uc_medialibrary = new uc_medialibrary();
 
 function uc_rewrite_rule() {
-   add_rewrite_rule( 'wp-content/uploads/(.*)$', 'wp-content/plugins/usergroup-content/external/private-image.php?img=$1' );
+   add_rewrite_rule('wp-content/uploads/(.*)$', 'wp-content/plugins/usergroup-content/external/private-image.php?img=$1');
 }
 
 add_action( 'init', 'uc_rewrite_rule' );
