@@ -30,6 +30,9 @@ class uc_medialibrary {
         return $form_fields;
     }
 
+    /* NOTE: Values get not saved correctly inside the grid view because of a bug in WordPress core.
+     * See: https://core.trac.wordpress.org/ticket/28053
+     */
     function save_usergroups_settings($attachment_id) {
         if (isset($_REQUEST['attachments'][$attachment_id]['usergroups'])) {
             $usergroups = $_REQUEST['attachments'][$attachment_id]['usergroups'];
