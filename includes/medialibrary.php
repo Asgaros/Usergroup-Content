@@ -36,6 +36,11 @@ class uc_medialibrary {
     function save_usergroups_settings($attachment_id) {
         if (isset($_REQUEST['attachments'][$attachment_id]['usergroups'])) {
             $usergroups = $_REQUEST['attachments'][$attachment_id]['usergroups'];
+
+            foreach ($usergroups as $key => $value) {
+                $usergroups[$key] = (int)$value;
+            }
+            
             update_post_meta($attachment_id, 'usergroups', $usergroups);
         }
     }
