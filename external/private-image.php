@@ -3,12 +3,17 @@
 define( 'WP_USE_THEMES', false );
 require( explode( "wp-content" , __FILE__ )[0] . "wp-load.php" );
 
+function uc_no_such_image () {
+   header( 'Content-Type: ' . 'image/png' );
+   readfile( plugin_dir_url(__FILE__) . 'no-such-image.png' );
+}
+
 $img = $_GET['img'];
 $parts = explode( '/', $img );
 
 global $wpdb;
 
-$querystring = "SELECT postmeta.meta_value, posts.post_mime_type
+$querystring = "SELECT posts.id, postmeta.meta_value, posts.post_mime_type
       FROM {$wpdb->prefix}postmeta AS postmeta
       INNER JOIN {$wpdb->prefix}posts AS posts
       ON postmeta.post_id = posts.id
@@ -19,7 +24,7 @@ $searchstring = '%' . $img . '%';
 $query = $wpdb->prepare( $querystring, $searchstring );
 $result = $wpdb->get_row( $query, ARRAY_A );
 
-// If empty result, maybe we have a thumbnail image
+// If $result is empty, perhaps we have a thumbnail image
 if( $result === null ) {
    $searchstring = '%' . end( $parts ) . '%';
    $query = $wpdb->prepare( $querystring, $searchstring );
@@ -40,17 +45,42 @@ if( $result === null ) {
    }
 }
 
+// No such image
 if( empty( $result ) ) {
-   die( __( "No such image", "usergroup-content" ) );
+   uc_no_such_image();
+}
+
+// Test if current user has the permission to display attachment
+function uc_is_permitted() {
+   global $uc_usergroups;
+   global $result;
+   $is_permitted = false;
+   foreach ( $uc_usergroups->get_usergroups_for_user( wp_get_current_user()->ID ) as $group ) {
+      if( in_array( $group->term_id,  $uc_usergroups->get_usergroups_for_post( $result['id'] ) ) ) {
+         $is_permitted = true;
+         break;
+      }
+   }
+   if( current_user_can( 'manage_options' ) ) {
+      $is_permitted = true;
+   }
+   return $is_permitted;
 }
 
 $attachment = maybe_unserialize( $result['meta_value'] );
 $mime_type = $result['post_mime_type'];
 
+// Show attachment or thumbnail
 if( $img == $attachment['file'] ) {
-   header( 'Content-Type: ' . $mime_type );
-   readfile( wp_upload_dir()['basedir'] . '/' . $attachment['file'] );
+   // We have an attachment
+   if( uc_is_permitted() ) {
+      header( 'Content-Type: ' . $mime_type );
+      readfile( wp_upload_dir()['basedir'] . '/' . $attachment['file'] );
+   } else {
+      uc_no_such_image();
+   }
 } else {
+   // We have a thumbnail
    $res = '';
    foreach( $attachment['sizes'] as $version ) {
       if( $version['file'] == end( $parts ) ) {
@@ -61,10 +91,15 @@ if( $img == $attachment['file'] ) {
 
    $upload_dir = implode( '/', array_slice( explode( '/', $attachment['file'] ), 0, -1 ) );
 
+   // Check for upload_dir
    if( ! empty( $res ) && ( $upload_dir == '' || strpos( $img, $upload_dir . '/' ) !== false ) ) {
-      header( 'Content-Type: ' . $res['mime-type'] );
-      readfile( wp_upload_dir()['basedir'] . '/' . $img );
+      if( uc_is_permitted() ) {
+         header( 'Content-Type: ' . $res['mime-type'] );
+         readfile( wp_upload_dir()['basedir'] . '/' . $img );
+      } else {
+         uc_no_such_image();
+      }
    } else {
-      die( __( "No such image!", "usergroup-content" ) );
+      uc_no_such_image();
    }
 }
