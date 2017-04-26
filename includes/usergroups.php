@@ -50,7 +50,7 @@ class uc_usergroups {
 
     // Returns color of usergroup
     function get_usergroup_color($term_id) {
-        return get_term_meta($term_id, 'user-group-color', true);
+        return get_term_meta($term_id, 'usergroup-color', true);
     }
 
     // Returns usergroups of user
@@ -226,7 +226,7 @@ class uc_usergroups {
 
     function add_color_form_field() {
         echo '<div class="form-field">';
-            echo '<input type="text" value="#333333" class="custom-color" name="user-group-color" data-default-color="#333333" />';
+            echo '<input type="text" value="#333333" class="custom-color" name="usergroup-color" data-default-color="#333333" />';
         echo '</div>';
     }
 
@@ -235,14 +235,14 @@ class uc_usergroups {
             echo '<th scope="row">'.__('Color', 'usergroup-content').'</th>';
             echo '<td>';
                 $color = $this->get_usergroup_color($term->term_id);
-                echo '<input type="text" value="'.$color.'" class="custom-color" name="user-group-color" data-default-color="#333333" />';
+                echo '<input type="text" value="'.$color.'" class="custom-color" name="usergroup-color" data-default-color="#333333" />';
             echo '</td>';
         echo '</tr>';
     }
 
     function save_usergroup($term_id) {
-        if (isset($_POST['user-group-color'])) {
-            update_term_meta($term_id, 'user-group-color', $_POST['user-group-color']);
+        if (isset($_POST['usergroup-color'])) {
+            update_term_meta($term_id, 'usergroup-color', $_POST['usergroup-color']);
 		}
 	}
 
